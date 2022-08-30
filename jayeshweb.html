@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Choose product</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:400,+600,+800">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <script type="text/javascript" src="data2.txt"></script>
+    <style>
+        body,
+        html {
+            height: 100%;
+            font-family: Roboto;
+        }
+
+        .information-box-wrapper {
+            width: 100%;
+            background: #fff;
+            padding: 0px 15px 15px 15px;
+        }
+
+        .information-box h5 {
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 15px;
+            padding-top: 15px;
+        }
+
+        .information-box small {
+            line-height: 1.2;
+            display: block;
+            padding: 10px 0 0;
+            opacity: 0.6;
+        }
+
+        .information-box .btn-color {
+            background: #ff3131;
+            color: #fff;
+            border-radius: 8px;
+        }
+
+        .information-box .form-group {
+            padding-left: 24px;
+            padding-top: 0px;
+        }
+
+        .information-box .custom-control-input:checked~.custom-control-label::before {
+            border-color: #ff3131;
+            background: #ff3131;
+            box-shadow: none;
+        }
+
+        .information-box .form-control {
+            height: 50px;
+            border-radius: 8px;
+        }
+
+        .information-box .form-control:focus {
+            border-color: #ff3131;
+            box-shadow: none;
+        }
+
+        .information-box-wrapper .error:empty {
+            padding-top: 0;
+        }
+
+        .information-box-wrapper .error {
+            font-size: 13px;
+            padding-top: 10px;
+            color: #dc3545;
+            margin: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- You can also require other files to run in this process -->
+    <div class="information-box-wrapper">
+        <div id="ChooseCenterWrapper" class="information-box">
+            <h5>Please enter the product details.</h5>
+                <form class="form-group" onsubmit="send_data(event)">
+                    <select id="product_title" class="form-control"
+                        onchange="selectProduct(this.id)" required>
+                        <option value="">Select product name</option>
+                        <option value="Mattress">Mattress</option>
+                        <option value="Pillow">Pillow</option>
+                        <option value="Bedding">Bedding</option>
+                        <option value="Beds">Beds</option>
+                        <option value="Pet Bed">Pet Bed</option>
+                    </select>
+                    <button type="submit" class="btn btn-block btn-color mt-3"  >Submit</button>
+                </form>
+        </div>
+    </div>
+    <script>
+        product_list = {
+            "Mattress": ["Plus Mattress", "Original Mattress", "Latex Mattress", "Baby Mattress"],
+            "Pillow": ["Memory Foam Pillow", "Cloud MicroFibre Pillow", "Cuddle Pillow","Pillow Case"],
+            "Bedding": ["Mattress Protector", "Reversible Comforter", "Weighted Blanket"],
+            "Beds": ["Ohayo Bed","Metal Bed Frame"],
+            "Pet Bed": ["Original", "Orthopedic"]
+        }
+
+        const data = JSON.parse(json_data)
+        let product = {
+            "product": "",
+            "type": "",
+            "height": "",
+            "color": "",
+            "size": "",
+        }
+        let product_data = [];
+        function selectProduct(id){
+            remove_dropdown(["product", "type", "color","height", "size"]);
+            var product_name = document.getElementById(id).value;
+            console.log(product_name, product_list[product_name]);
+            if(product_name == ""){
+                return;
+            }
+            
+            create_dropdown(product_list[product_name], "product", "productSelected()");
+        }
+        function productSelected() {
+            remove_dropdown(["type", "height", "color", "size"])
+            var product_name = document.getElementById("product").value;
+
+            if (product_name == "") {             // if User Selected the default option "Select the product" one
+                return;
+            }
+            product_data = extract_product_data(product_name);
+          
+            type_list = get_unique_list(product_data, "type", null);
+            if (type_list.length != 0)
+                create_dropdown(type_list, "type", 'selectedType()');
+            if(type_list.length==1){
+                selectedType();
+            }
+        }
+
+        function selectedType(type_selected) {
+            
+            remove_dropdown(["height", "color", "size"])    // Add the id that will come after "Select Type"
+            var type = type_selected==null?document.getElementById('type').value:type_selected;
+            
+            height_list = get_unique_list(product_data, 'height');
+            color_list = get_unique_list(product_data, "color");
+            console.log(product)
+            create_dropdown(height_list, "height", "selectSize()");
+            create_dropdown(color_list, "color", "selectSize()");
+            selectSize();   
+        }
+
+        function selectSize(){
+            remove_dropdown(['size'])
+            size_list = get_unique_list(product_data, "size");
+            create_dropdown(size_list, 'size', "")
+        }
+
+        function create_dropdown(list_of_option, new_element_id, function_name) {
+            if(list_of_option.length==0){
+                return;
+            }
+            var parentElement = document.getElementsByClassName('form-group')[0];
+
+            var selectElement = document.createElement('select');
+            selectElement.setAttribute("class", "form-control mt-2");
+            selectElement.setAttribute('id', new_element_id);
+            selectElement.required = true;
+            if (function_name != null) {
+                selectElement.setAttribute('onchange', function_name);
+            }
+            if(list_of_option.length>1){
+                var option = document.createElement('option');
+                option.value = ""
+                option.innerHTML = "Select " + new_element_id;
+                selectElement.appendChild(option);
+            }
+            list_of_option.forEach(element => {
+                var newOption = document.createElement("option");
+                newOption.value = element;
+                newOption.innerHTML = element;
+                selectElement.appendChild(newOption);
+            });
+            parentElement.insertBefore(selectElement,document.getElementsByClassName('btn')[0]);
+        }
+
+        function remove_dropdown(list_of_ids) {
+            list_of_ids.forEach(id => {
+                var element = document.getElementById(id);
+                if (element != null && element.childNodes.length != 0)
+                    element.parentNode.removeChild(element);
+            });
+        }
+
+        function extract_product_data(product_name) {
+            product_data = []
+            data.forEach(element => {
+                if (element['product_type'] == product_name) {
+                    product_data.push(element)
+                }
+            });
+            return product_data;
+        }
+
+        function updated_product_dict(){
+            product_type = document.getElementById('product');
+            type = document.getElementById('type');
+            height = document.getElementById("height");
+            color = document.getElementById("color");
+            size = document.getElementById("size");
+            product = {
+                "product_type": product_type!=null?product_type.value:"",
+                "type": type!=null?type.value:"",
+                "height": height!=null?height.value:"",
+                "color": color!=null?color.value:"",
+                "size": size!=null?size.value:"",
+            }
+            return product;
+        }
+
+        function get_unique_list(product_data, key) {
+            var value_list = new Set();
+            var sort_by_data = updated_product_dict()           
+            product_data.forEach(element => {
+                is_equal = true;
+                for (var i in sort_by_data) {
+                    if(sort_by_data[i]==""){
+                        continue;
+                    }
+                    if (element[i] != sort_by_data[i]) {
+                        is_equal = false;
+                        break;
+                    }
+                }
+                if (is_equal && element[key].length!=0) {
+                    value_list.add(element[key]);
+                }
+            });
+
+            return Array.from(value_list)
+        }
+
+        function check_product(){
+            product_data = updated_product_dict();
+            for(i in product){
+                if(i=='sku_code') continue;
+                console.log(product_data[i],product[i])
+                if(product[i]!=product_data[i]){
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        function send_data(e) {
+            e.preventDefault();
+            let sku_code = get_unique_list(product_data, "sku_code");
+            var product_title = document.getElementById('product_title').value;
+            message = (product_title!=undefined?"Product: "+product_title+"<br>":"")+"Product Category: "+product['product_type'] +"<br>" + "Product Type: " +product['type']+ "<br>" +(product['size']!=""? "Product Size: "+product['size']+"<br>":"" )+ (color != undefined ? "Color: "+color.value+"<br>" : '') + (height != undefined ? "Height: " + height.value +"<br>": '') + " {api_name: sleepycat, product_sku: " + sku_code + ",product_name: " + product['product_type'] + "}";
+            closeWindow(message); 
+            
+        }
+
+        function closeWindow(message) {
+            console.log("CLOSE WINDOW RAN 0255 change the message = ${message}", message);
+            if (window.parent) {
+                window.parent.postMessage(`http://haptik-webview//perform-action?action=close&message=pritesh&message_type=0`, '*');
+            }
+        }
+
+        function error(){
+            var alert = document.getElementById('alert'); 
+            alert.style.display = "block";
+            alert.innerHTML = "Please select all the fields";
+            setTimeout(()=>{alert.style.display = "none"},3000);
+        }
+
+    </script>
+</body>
+
+</html>
